@@ -6,99 +6,90 @@ email: zuzana.divinova@gmail.com
 """
 import random
 
-separator = "-" * 47
+separator = "-" * 57
 
-print("Hi there!")
-print(separator)
-print("""I've generated a random 4 digit number for you.
-Let's play a bulls and cows game.""")
-print(separator)
+NUM_DIGITS = 4  
 
-def generate_secret_number():
+def generate_secret_number() -> list[str]:
     """
-    Generate a random 4-digit secret number.
-    The digits are unique and range from 1 to 9.
-    Returns:
-        list of str: A list containing 4 unique digits as strings.
+    Generate a random secret number.
+    The digits are unique and from 0-9, but the first digit is not 0.
     """
-    digits = random.sample(range(1, 10), 4)
-    return [str(digit) for digit in digits]
+    digits = random.sample(range(0, 10), NUM_DIGITS)
+    while digits[0] == 0:
+        digits = random.sample(range(0, 10), NUM_DIGITS)
+    return [str(d) for d in digits]
 
-def evaluate_guess(secret, guess):
+def evaluate_guess(secret: list[str], guess: list[str]) -> tuple[int, int]:
     """
-    Compare the secret number and the player's guess.
-    Counts bulls (correct digit and correct position)
-    and cows (correct digit but wrong position).
-
-    Args:
-        secret (list of str): The secret number as a list of digits.
-        guess (list of str): The player's guess as a list of digits.
-
-    Returns:
-        tuple: Number of bulls and cows as integers.
+    Count bulls (correct position) and cows (correct digit wrong position).
     """
     bulls = sum(s == g for s, g in zip(secret, guess))
     cows = sum(min(secret.count(d), guess.count(d)) for d in set(guess)) - bulls
     return bulls, cows
 
-def format_result(bulls, cows):
+def format_result(bulls: int, cows: int) -> str:
     """
-    Format the result string based on the number of bulls and cows.
-    Uses singular or plural form correctly (e.g., 1 bull, 2 bulls).
-
-    Args:
-        bulls (int): Number of bulls.
-        cows (int): Number of cows.
-
-    Returns:
-        str: Formatted result string.
+    Format result message based on the count of bulls and cows.
     """
     bull_word = "bull" if bulls == 1 else "bulls"
     cow_word = "cow" if cows == 1 else "cows"
-
-    if bulls == 0:
-        bull_word = "bulls"
-    if cows == 0:
-        cow_word = "cows"
-
     return f"{bulls} {bull_word}, {cows} {cow_word}"
 
-secret_numbers = generate_secret_number()
-# print("Secret number:", "".join(secret_numbers))
+def is_valid_guess(guess: str) -> bool:
+    """
+    Validate the user's guess.
+    Must be a digit string of correct length, no duplicate digits.
+    """
+    if not guess.isdigit():
+        return False
+    if len(guess) != NUM_DIGITS:
+        return False
+    if guess[0] == "0":
+        return False
+    if len(set(guess)) != NUM_DIGITS:
+        return False
+    return True
 
-print("Enter a number:")
-print(separator)
+def main() -> None:
+    print("Hi there!")
+    print(separator)
+    print(f"I've generated a random {NUM_DIGITS}-digit number for you.\nLet's play a bulls and cows game.")
+    print(separator)
 
-guess_count = 0
+    secret_numbers = generate_secret_number()
+    # print("Secret:", "".join(secret_numbers))  # For testing
 
-while True:
-    guess = list(input(">>> "))
+    print("Enter a number:")
+    print(separator)
 
-    if len(guess) != 4:
-        print("Invalid input. \nPlease enter exactly 4 different numbers.")
-        print(separator)
-        continue
-    elif guess[0] == "0":
-        print("Invalid input. \nPlease enter exactly 4 different numbers. \n0 can't be first.")
-        print(separator)
-        continue
-    elif len(set(guess)) != 4:
-        print("Invalid input. \nPlease enter exactly 4 different numbers.")
-        print(separator)
-        continue
-    elif not "".join(guess).isdigit():
-        print("Invalid input. \nPlease enter exactly 4 different numbers.")
-        print(separator)
-        continue
+    guess_count = 0
 
-    guess_count += 1
-    bulls, cows = evaluate_guess(secret_numbers, list(guess))
+    while True:
+        try:
+            guess_input = input(">>> ")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            continue
 
-    if bulls == 4:
-        print(f"Correct, you've guessed the right number \nin {guess_count} guesses!")
-        print(separator)
-        print("That's amazing!")
-        break
-    else:
-        print(format_result(bulls, cows))
-        print(separator)
+        if not is_valid_guess(guess_input):
+            print("Invalid input.\nPlease enter exactly 4 different digits.\n"
+                  "Digits must be unique and the number cannot start with 0.")
+            print(separator)
+            continue
+
+        guess_count += 1
+        guess = list(guess_input)
+        bulls, cows = evaluate_guess(secret_numbers, guess)
+
+        if bulls == NUM_DIGITS:
+            print(f"Correct, you've guessed the right number \nin {guess_count} guesses!")
+            print(separator)
+            print("That's amazing!")
+            break
+        else:
+            print(format_result(bulls, cows))
+            print(separator)
+
+if __name__ == "__main__":
+    main()
